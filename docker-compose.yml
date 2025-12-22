@@ -1,0 +1,25 @@
+services:
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    ports:
+      - "${BACKEND_PORT:-3001}:3001"
+    environment:
+      - PORT=3001
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://localhost:3001}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      - PORT=3000
+    depends_on:
+      - backend
+    restart: unless-stopped
