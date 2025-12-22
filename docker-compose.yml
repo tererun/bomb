@@ -4,22 +4,34 @@ services:
       context: ./apps/backend
       dockerfile: Dockerfile
     ports:
-      - "${BACKEND_PORT:-3001}:3001"
+      - "3001:3001"
     environment:
       - PORT=3001
-      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+      - CORS_ORIGINS=${CORS_ORIGINS:-https://bomb.app.tere.run}
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bomb-backend.rule=Host(`bomb-api.app.tere.run`)"
+      - "traefik.http.routers.bomb-backend.entrypoints=https"
+      - "traefik.http.routers.bomb-backend.tls=true"
+      - "traefik.http.services.bomb-backend.loadbalancer.server.port=3001"
 
   frontend:
     build:
       context: ./apps/frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-http://localhost:3001}
+        - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://bomb-api.app.tere.run}
     ports:
-      - "${FRONTEND_PORT:-3000}:3000"
+      - "3000:3000"
     environment:
       - PORT=3000
     depends_on:
       - backend
     restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.bomb-frontend.rule=Host(`bomb.app.tere.run`)"
+      - "traefik.http.routers.bomb-frontend.entrypoints=https"
+      - "traefik.http.routers.bomb-frontend.tls=true"
+      - "traefik.http.services.bomb-frontend.loadbalancer.server.port=3000"
