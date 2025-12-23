@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Capsule, Html } from "@react-three/drei";
 import * as THREE from "three";
@@ -14,6 +14,7 @@ interface Player3DProps {
   isConnected: boolean;
   headRotation: { x: number; y: number };
   hideStatus?: boolean;
+  skinTexture?: string | null;
 }
 
 export function Player3D({
@@ -25,13 +26,44 @@ export function Player3D({
   isConnected,
   headRotation,
   hideStatus = false,
+  skinTexture,
 }: Player3DProps) {
   const groupRef = useRef<THREE.Group>(null);
   const headRef = useRef<THREE.Group>(null);
   const targetHeadRotation = useRef({ x: 0, y: 0 });
 
+  const texture = useMemo(() => {
+    if (!skinTexture) return null;
+    const loader = new THREE.TextureLoader();
+    const tex = loader.load(skinTexture);
+    tex.minFilter = THREE.NearestFilter;
+    tex.magFilter = THREE.NearestFilter;
+    return tex;
+  }, [skinTexture]);
+
+  const headMaterials = useMemo(() => {
+    const sideColor = isConnected ? "#e8c4a0" : "#888888";
+    const sideMaterial = new THREE.MeshStandardMaterial({
+      color: sideColor,
+      roughness: 0.8,
+      metalness: 0.1,
+    });
+
+    if (texture) {
+      const frontMaterial = new THREE.MeshStandardMaterial({
+        map: texture,
+        roughness: 0.8,
+        metalness: 0.1,
+      });
+      return [
+        sideMaterial, sideMaterial, sideMaterial, sideMaterial,
+        frontMaterial, sideMaterial,
+      ];
+    }
+    return [sideMaterial, sideMaterial, sideMaterial, sideMaterial, sideMaterial, sideMaterial];
+  }, [texture, isConnected]);
+
   useFrame(() => {
-    // Smoothly interpolate head rotation
     if (headRef.current) {
       targetHeadRotation.current = headRotation;
       headRef.current.rotation.x += (targetHeadRotation.current.x - headRef.current.rotation.x) * 0.15;
@@ -40,7 +72,6 @@ export function Player3D({
   });
 
   const bodyColor = isConnected ? "#4a90d9" : "#666666";
-  const headColor = isConnected ? "#e8c4a0" : "#888888";
 
   return (
     <group ref={groupRef} position={position} rotation={rotation} scale={2}>
@@ -59,25 +90,22 @@ export function Player3D({
 
       {/* Head group - rotates based on server data */}
       <group ref={headRef} position={[0, 1.3, 0]}>
-        {/* Head */}
-        <mesh castShadow>
-          <sphereGeometry args={[0.2, 16, 16]} />
-          <meshStandardMaterial
-            color={headColor}
-            roughness={0.8}
-            metalness={0.1}
-          />
+        <mesh castShadow material={headMaterials}>
+          <boxGeometry args={[0.4, 0.4, 0.4]} />
         </mesh>
 
-        {/* Eyes */}
-        <mesh position={[0.08, 0.05, 0.15]}>
-          <sphereGeometry args={[0.04, 8, 8]} />
-          <meshBasicMaterial color={isConnected ? "#000000" : "#444444"} />
-        </mesh>
-        <mesh position={[-0.08, 0.05, 0.15]}>
-          <sphereGeometry args={[0.04, 8, 8]} />
-          <meshBasicMaterial color={isConnected ? "#000000" : "#444444"} />
-        </mesh>
+        {!skinTexture && (
+          <>
+            <mesh position={[0.08, 0.05, 0.21]}>
+              <sphereGeometry args={[0.04, 8, 8]} />
+              <meshBasicMaterial color={isConnected ? "#000000" : "#444444"} />
+            </mesh>
+            <mesh position={[-0.08, 0.05, 0.21]}>
+              <sphereGeometry args={[0.04, 8, 8]} />
+              <meshBasicMaterial color={isConnected ? "#000000" : "#444444"} />
+            </mesh>
+          </>
+        )}
       </group>
 
       {/* Arms */}

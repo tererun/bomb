@@ -7,6 +7,7 @@ export interface Player {
   isAlive: boolean;
   isHost: boolean;
   headRotation: { x: number; y: number };
+  skin?: string | null;
 }
 
 export interface Bomb {
@@ -41,12 +42,13 @@ export interface DiceResult {
 }
 
 interface ClientToServerEvents {
-  createRoom: (playerName: string, callback: (response: { success: boolean; roomId?: string; error?: string }) => void) => void;
-  joinRoom: (roomId: string, playerName: string, callback: (response: { success: boolean; error?: string }) => void) => void;
+  createRoom: (playerName: string, skin: string | null, callback: (response: { success: boolean; roomId?: string; error?: string }) => void) => void;
+  joinRoom: (roomId: string, playerName: string, skin: string | null, callback: (response: { success: boolean; error?: string }) => void) => void;
   startGame: (callback: (response: { success: boolean; error?: string }) => void) => void;
   rollDice: (callback: (response: { success: boolean; error?: string }) => void) => void;
   passBomb: (targetName: string, callback: (response: { success: boolean; error?: string }) => void) => void;
   updateHeadRotation: (rotation: { x: number; y: number }) => void;
+  updateSkin: (skin: string | null) => void;
 }
 
 interface ServerToClientEvents {
@@ -62,6 +64,7 @@ interface ServerToClientEvents {
   directionChanged: (direction: 1 | -1) => void;
   waitingForPassChoice: (playerName: string) => void;
   playerHeadRotation: (data: { playerName: string; rotation: { x: number; y: number } }) => void;
+  playerSkinUpdated: (data: { playerName: string; skin: string | null }) => void;
   error: (message: string) => void;
 }
 

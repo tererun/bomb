@@ -57,8 +57,9 @@ export default function GamePage({ params }: PageProps) {
 
     // Check if already connected to this room (e.g., after creating)
     // If not, join the room
+    const savedSkin = localStorage.getItem("bombGame_skin");
     const handleJoin = () => {
-      socket.emit("joinRoom", roomId, savedName, (response) => {
+      socket.emit("joinRoom", roomId, savedName, savedSkin, (response) => {
         if (!response.success) {
           alert(response.error || "Failed to join room");
           router.push("/");
@@ -214,6 +215,20 @@ export default function GamePage({ params }: PageProps) {
       });
     });
 
+    socket.on("playerSkinUpdated", (data) => {
+      setGameState((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          players: prev.players.map((p) =>
+            p.name === data.playerName
+              ? { ...p, skin: data.skin }
+              : p
+          ),
+        };
+      });
+    });
+
     return () => {
       socket.off("roomState");
       socket.off("diceResult");
@@ -227,6 +242,7 @@ export default function GamePage({ params }: PageProps) {
       socket.off("bombMoved");
       socket.off("directionChanged");
       socket.off("playerHeadRotation");
+      socket.off("playerSkinUpdated");
     };
   }, [roomId, router, showNotification]);
 

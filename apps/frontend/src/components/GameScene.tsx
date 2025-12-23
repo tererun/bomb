@@ -147,6 +147,7 @@ export function GameScene({ gameState, myName, diceResult, showExplosion, animat
               isConnected={player.socketId !== null}
               headRotation={player.headRotation || { x: 0, y: 0 }}
               hideStatus={isAnimating}
+              skinTexture={player.skin}
             />
           );
         })}

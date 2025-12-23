@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSocket, connectSocket } from "@/lib/socket";
+import { SkinCanvas } from "@/components/SkinCanvas";
 
 export default function Home() {
   const router = useRouter();
@@ -10,6 +11,7 @@ export default function Home() {
   const [roomId, setRoomId] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [skin, setSkin] = useState<string | null>(null);
 
   useEffect(() => {
     connectSocket();
@@ -17,7 +19,16 @@ export default function Home() {
     if (savedName) {
       setPlayerName(savedName);
     }
+    const savedSkin = localStorage.getItem("bombGame_skin");
+    if (savedSkin) {
+      setSkin(savedSkin);
+    }
   }, []);
+
+  const handleSaveSkin = (dataUrl: string) => {
+    setSkin(dataUrl);
+    localStorage.setItem("bombGame_skin", dataUrl);
+  };
 
   const handleCreateRoom = () => {
     if (!playerName.trim()) {
@@ -29,7 +40,7 @@ export default function Home() {
     setError("");
     const socket = getSocket();
 
-    socket.emit("createRoom", playerName.trim(), (response) => {
+    socket.emit("createRoom", playerName.trim(), skin, (response) => {
       setIsLoading(false);
       if (response.success && response.roomId) {
         localStorage.setItem("bombGame_playerName", playerName.trim());
@@ -55,7 +66,7 @@ export default function Home() {
     setError("");
     const socket = getSocket();
 
-    socket.emit("joinRoom", roomId.trim().toUpperCase(), playerName.trim(), (response) => {
+    socket.emit("joinRoom", roomId.trim().toUpperCase(), playerName.trim(), skin, (response) => {
       setIsLoading(false);
       if (response.success) {
         localStorage.setItem("bombGame_playerName", playerName.trim());
@@ -69,7 +80,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex items-center justify-center p-4">
-      <div className="bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md">
+      <div className="flex gap-6 items-start">
+        <div className="bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <h1 className="text-4xl font-bold text-center mb-2 text-white">
           💣 爆弾回しゲーム
         </h1>
@@ -139,15 +151,18 @@ export default function Home() {
         </div>
 
         <div className="mt-8 p-4 bg-gray-700/50 rounded-lg">
-          <h2 className="text-lg font-bold text-white mb-2">ルール</h2>
-          <ul className="text-sm text-gray-300 space-y-1">
-            <li>• ダイス2個の合計だけ爆弾が右回りに移動</li>
-            <li>• 爆弾のHPが0になったら爆発！持ってた人の負け</li>
-            <li>• <span className="text-yellow-400">4-4</span>: 回転方向が逆転</li>
-            <li>• <span className="text-green-400">1-1</span>: 好きな人に押し付け</li>
-            <li>• <span className="text-red-400">6-6</span>: 爆弾のHPが半分に！</li>
-          </ul>
+            <h2 className="text-lg font-bold text-white mb-2">ルール</h2>
+            <ul className="text-sm text-gray-300 space-y-1">
+              <li>• ダイス2個の合計だけ爆弾が右回りに移動</li>
+              <li>• 爆弾のHPが0になったら爆発！持ってた人の負け</li>
+              <li>• <span className="text-yellow-400">4-4</span>: 回転方向が逆転</li>
+              <li>• <span className="text-green-400">1-1</span>: 好きな人に押し付け</li>
+              <li>• <span className="text-red-400">6-6</span>: 爆弾のHPが半分に！</li>
+            </ul>
+          </div>
         </div>
+
+        <SkinCanvas onSave={handleSaveSkin} initialSkin={skin} />
       </div>
     </div>
   );
