@@ -37,14 +37,18 @@ io.on("connection", (socket) => {
     const player = room.addPlayer(playerName, socket.id, skin);
 
     if (!player) {
-      callback({ success: false, error: "Failed to create room" });
+      if (typeof callback === "function") {
+        callback({ success: false, error: "Failed to create room" });
+      }
       return;
     }
 
     rooms.set(roomId, room);
     socket.join(roomId);
     
-    callback({ success: true, roomId });
+    if (typeof callback === "function") {
+      callback({ success: true, roomId });
+    }
     io.to(roomId).emit("roomState", room.getState());
     
     console.log(`Room ${roomId} created by ${playerName}`);
@@ -54,7 +58,9 @@ io.on("connection", (socket) => {
     const room = rooms.get(roomId.toUpperCase());
     
     if (!room) {
-      callback({ success: false, error: "Room not found" });
+      if (typeof callback === "function") {
+        callback({ success: false, error: "Room not found" });
+      }
       return;
     }
 
@@ -67,7 +73,9 @@ io.on("connection", (socket) => {
         existingPlayer.skin = skin;
       }
       socket.join(roomId.toUpperCase());
-      callback({ success: true });
+      if (typeof callback === "function") {
+        callback({ success: true });
+      }
       io.to(roomId.toUpperCase()).emit("playerReconnected", playerName);
       io.to(roomId.toUpperCase()).emit("roomState", room.getState());
       console.log(`${playerName} reconnected to room ${roomId}`);
@@ -77,12 +85,16 @@ io.on("connection", (socket) => {
     const player = room.addPlayer(playerName, socket.id, skin);
     
     if (!player) {
-      callback({ success: false, error: "Cannot join room (game already started)" });
+      if (typeof callback === "function") {
+        callback({ success: false, error: "Cannot join room (game already started)" });
+      }
       return;
     }
 
     socket.join(roomId.toUpperCase());
-    callback({ success: true });
+    if (typeof callback === "function") {
+      callback({ success: true });
+    }
     io.to(roomId.toUpperCase()).emit("playerJoined", player);
     io.to(roomId.toUpperCase()).emit("roomState", room.getState());
     console.log(`${playerName} joined room ${roomId}`);
@@ -91,22 +103,30 @@ io.on("connection", (socket) => {
   socket.on("startGame", (callback) => {
     const room = findRoomBySocketId(socket.id);
     if (!room) {
-      callback({ success: false, error: "Room not found" });
+      if (typeof callback === "function") {
+        callback({ success: false, error: "Room not found" });
+      }
       return;
     }
 
     const player = room.getPlayerBySocketId(socket.id);
     if (!player?.isHost) {
-      callback({ success: false, error: "Only host can start the game" });
+      if (typeof callback === "function") {
+        callback({ success: false, error: "Only host can start the game" });
+      }
       return;
     }
 
     if (!room.startGame()) {
-      callback({ success: false, error: "Cannot start game (need at least 2 players)" });
+      if (typeof callback === "function") {
+        callback({ success: false, error: "Cannot start game (need at least 2 players)" });
+      }
       return;
     }
 
-    callback({ success: true });
+    if (typeof callback === "function") {
+      callback({ success: true });
+    }
     io.to(room.roomId).emit("gameStarted");
     io.to(room.roomId).emit("roomState", room.getState());
     
@@ -121,7 +141,9 @@ io.on("connection", (socket) => {
   socket.on("rollDice", (callback) => {
     const room = findRoomBySocketId(socket.id);
     if (!room) {
-      callback({ success: false, error: "Room not found" });
+      if (typeof callback === "function") {
+        callback({ success: false, error: "Room not found" });
+      }
       return;
     }
 
@@ -129,17 +151,23 @@ io.on("connection", (socket) => {
     const currentTurnPlayer = room.getCurrentTurnPlayer();
     
     if (!player || player.name !== currentTurnPlayer?.name) {
-      callback({ success: false, error: "Not your turn" });
+      if (typeof callback === "function") {
+        callback({ success: false, error: "Not your turn" });
+      }
       return;
     }
 
     const diceResult = room.rollDice();
     if (!diceResult) {
-      callback({ success: false, error: "Cannot roll dice now" });
+      if (typeof callback === "function") {
+        callback({ success: false, error: "Cannot roll dice now" });
+      }
       return;
     }
 
-    callback({ success: true });
+    if (typeof callback === "function") {
+      callback({ success: true });
+    }
     io.to(room.roomId).emit("diceResult", diceResult);
 
     if (diceResult.effect === "reverse") {
