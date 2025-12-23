@@ -12,8 +12,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.bomb-backend.rule=Host(`bomb-api.app.tere.run`)"
-      - "traefik.http.routers.bomb-backend.entrypoints=https"
-      - "traefik.http.routers.bomb-backend.tls=true"
+      - "traefik.http.routers.bomb-backend.entrypoints=http"
       - "traefik.http.services.bomb-backend.loadbalancer.server.port=3001"
 
   frontend:
@@ -32,6 +31,5 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.bomb-frontend.rule=Host(`bomb.app.tere.run`)"
-      - "traefik.http.routers.bomb-frontend.entrypoints=https"
-      - "traefik.http.routers.bomb-frontend.tls=true"
+      - "traefik.http.routers.bomb-frontend.entrypoints=http"
       - "traefik.http.services.bomb-frontend.loadbalancer.server.port=3000"
