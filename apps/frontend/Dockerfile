@@ -23,7 +23,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN adduser --system --uid 1001 nextjs
+RUN useradd -r -u 1001 -g bun nextjs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:bun /app/.next/standalone ./
