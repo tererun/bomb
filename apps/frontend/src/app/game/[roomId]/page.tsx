@@ -169,11 +169,11 @@ export default function GamePage({ params }: PageProps) {
               setShowExplosion(true);
               sounds.playExplosion();
               
-              // Play win/lose sound immediately
+              // Play win/lose sound immediately (everyone except the loser survives)
               setGameState((prev) => {
                 if (prev?.loser === savedName) {
                   sounds.playLose();
-                } else if (prev?.winner === savedName) {
+                } else {
                   sounds.playWin();
                 }
                 return prev;

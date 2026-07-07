@@ -81,16 +81,19 @@ export function GameHUD({
         {gameState.phase === "finished" && (
           <div className="text-center">
             <div className="text-4xl mb-4">
-              {gameState.winner === myName ? "🎉" : gameState.loser === myName ? "💀" : "🏁"}
+              {gameState.loser === myName ? "💀" : "🎉"}
             </div>
-            <div className="text-2xl font-bold text-white mb-4">
-              {gameState.winner === myName ? (
-                "あなたの勝ち！"
-              ) : gameState.loser === myName ? (
-                "あなたの負け..."
-              ) : (
-                <><span className="text-yellow-400">{gameState.winner}</span> の勝ち</>
-              )}
+            <div className="mb-4">
+              <div className="inline-block bg-red-600/90 px-8 py-3 rounded-2xl shadow-lg mb-3">
+                <span className="text-3xl font-bold text-white">
+                  💣 <span className="text-yellow-300">{gameState.loser}</span> の負け！
+                </span>
+              </div>
+              <div className="text-xl font-bold text-white">
+                {gameState.loser === myName
+                  ? "あなたの負けです..."
+                  : "あなたは生き残りました！"}
+              </div>
             </div>
             <button
               onClick={() => window.location.href = "/"}
