@@ -64,9 +64,13 @@ export function MyAvatar({ position, isCurrentTurn, hasBomb }: MyAvatarProps) {
       const cameraDirection = new THREE.Vector3();
       camera.getWorldDirection(cameraDirection);
       
-      // Calculate the Y rotation from camera direction
+      // Calculate the Y rotation from camera direction, normalized to [-PI, PI]
+      // so the value never wraps around (e.g. 2PI -> 0) when facing forward.
       const yRotation = Math.atan2(cameraDirection.x, cameraDirection.z);
-      headRef.current.rotation.y = yRotation + Math.PI;
+      headRef.current.rotation.y = THREE.MathUtils.euclideanModulo(
+        yRotation + Math.PI * 2,
+        Math.PI * 2
+      ) - Math.PI;
       
       // Slight X rotation based on camera pitch
       const pitch = Math.asin(-cameraDirection.y);

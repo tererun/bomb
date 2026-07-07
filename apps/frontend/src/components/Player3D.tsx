@@ -32,6 +32,14 @@ export function Player3D({
   const headRef = useRef<THREE.Group>(null);
   const targetHeadRotation = useRef({ x: 0, y: 0 });
 
+  // Returns the shortest signed angle from `from` to `to`, wrapped to [-PI, PI].
+  // Without this, a target jumping between ~0 and ~2PI (e.g. facing forward)
+  // makes the head spin all the way around during interpolation.
+  const shortestAngleDiff = (from: number, to: number) => {
+    const diff = THREE.MathUtils.euclideanModulo(to - from + Math.PI, Math.PI * 2) - Math.PI;
+    return diff;
+  };
+
   const texture = useMemo(() => {
     if (!skinTexture) return null;
     const loader = new THREE.TextureLoader();
@@ -66,8 +74,8 @@ export function Player3D({
   useFrame(() => {
     if (headRef.current) {
       targetHeadRotation.current = headRotation;
-      headRef.current.rotation.x += (targetHeadRotation.current.x - headRef.current.rotation.x) * 0.15;
-      headRef.current.rotation.y += (targetHeadRotation.current.y - headRef.current.rotation.y) * 0.15;
+      headRef.current.rotation.x += shortestAngleDiff(headRef.current.rotation.x, targetHeadRotation.current.x) * 0.15;
+      headRef.current.rotation.y += shortestAngleDiff(headRef.current.rotation.y, targetHeadRotation.current.y) * 0.15;
     }
   });
 
