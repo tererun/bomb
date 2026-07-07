@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState, useCallback } from "react";
+import { use, useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { getSocket, connectSocket, type GameState, type DiceResult, type Player } from "@/lib/socket";
@@ -37,6 +37,12 @@ export default function GamePage({ params }: PageProps) {
   const [showExplosion, setShowExplosion] = useState(false);
   const [animatingBombIndex, setAnimatingBombIndex] = useState<number | null>(null);
   const [diceThrowerId, setDiceThrowerId] = useState<number | null>(null);
+
+  // While the bomb-passing animation plays, we hold back server state updates
+  // so players can't tell in advance who ends up with the bomb or when it explodes.
+  const bombAnimatingRef = useRef(false);
+  const pendingRoomStateRef = useRef<GameState | null>(null);
+  const pendingTurnChangeRef = useRef<string | null>(null);
 
   const showNotification = useCallback((message: string, duration = 3000) => {
     setNotification(message);
@@ -75,6 +81,12 @@ export default function GamePage({ params }: PageProps) {
     }
 
     socket.on("roomState", (state) => {
+      if (bombAnimatingRef.current) {
+        // Defer state updates (new bomb holder, finished phase, loser, etc.)
+        // until the bomb-passing animation completes.
+        pendingRoomStateRef.current = state;
+        return;
+      }
       setGameState(state);
     });
 
@@ -128,6 +140,11 @@ export default function GamePage({ params }: PageProps) {
     });
 
     socket.on("turnChanged", (playerName) => {
+      if (bombAnimatingRef.current) {
+        // Don't reveal the next turn until the bomb finishes moving.
+        pendingTurnChangeRef.current = playerName;
+        return;
+      }
       if (playerName === savedName) {
         showNotification("あなたのターンです！", 1500);
         sounds.playYourTurn();
@@ -147,12 +164,26 @@ export default function GamePage({ params }: PageProps) {
     });
 
     socket.on("bombMoved", (data) => {
-      const { steps, explodedAtStep } = data;
+      const { steps, explodedAtStep, newBombHolder } = data;
       
       if (steps.length === 0) {
         sounds.playBombPass();
         return;
       }
+
+      // Hold back roomState / turnChanged updates until the animation ends,
+      // so nobody can see in advance where the bomb stops or that it explodes.
+      bombAnimatingRef.current = true;
+
+      const applyPendingState = () => {
+        bombAnimatingRef.current = false;
+        const finalState = pendingRoomStateRef.current;
+        pendingRoomStateRef.current = null;
+        if (finalState) {
+          setGameState(finalState);
+        }
+        return finalState;
+      };
 
       // Animate bomb moving step by step
       let stepIndex = 0;
@@ -165,18 +196,21 @@ export default function GamePage({ params }: PageProps) {
           if (explodedAtStep !== -1 && stepIndex === explodedAtStep) {
             // Explode after a short delay at this position
             setTimeout(() => {
+              const finalState = applyPendingState();
+              pendingTurnChangeRef.current = null;
               setAnimatingBombIndex(null);
               setShowExplosion(true);
               sounds.playExplosion();
               
-              // Play win/lose sound immediately
+              // Play win/lose sound at the explosion (everyone except the loser survives)
               setGameState((prev) => {
-                if (prev?.loser === savedName) {
+                const next = finalState ?? prev;
+                if (next?.loser === savedName) {
                   sounds.playLose();
-                } else if (prev?.winner === savedName) {
+                } else {
                   sounds.playWin();
                 }
-                return prev;
+                return next;
               });
               
               setTimeout(() => {
@@ -189,7 +223,19 @@ export default function GamePage({ params }: PageProps) {
           stepIndex++;
           setTimeout(animateStep, 400);
         } else {
+          // Bomb settled: now reveal who ended up holding it
+          applyPendingState();
           setAnimatingBombIndex(null);
+
+          const nextTurnName = pendingTurnChangeRef.current ?? newBombHolder;
+          pendingTurnChangeRef.current = null;
+          if (nextTurnName === savedName) {
+            showNotification("💣 爆弾があなたの手に！あなたのターンです！", 2000);
+            sounds.playYourTurn();
+          } else if (nextTurnName) {
+            showNotification(`💣 爆弾は ${nextTurnName} の手に！`, 2000);
+            sounds.playTurnChange();
+          }
         }
       };
       
