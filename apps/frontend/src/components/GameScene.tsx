@@ -1,15 +1,14 @@
 "use client";
 
-import { Canvas, useThree, useFrame } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
-import { useMemo, Suspense, useRef } from "react";
+import { useMemo, Suspense } from "react";
 import type { GameState, DiceResult } from "@/lib/socket";
 import { Table } from "./Table";
 import { Bomb3D } from "./Bomb3D";
 import { Player3D } from "./Player3D";
 import { Dice3D } from "./Dice3D";
 import { MyAvatar } from "./MyAvatar";
-import * as THREE from "three";
 
 interface GameSceneProps {
   gameState: GameState;
@@ -89,14 +88,15 @@ export function GameScene({ gameState, myName, diceResult, showExplosion, animat
           near={0.1}
           far={100}
         />
-        {/* Camera rotates around the player's head position (like turning your head) */}
+        {/* Camera rotates around the player's head position (like turning your head).
+            Polar angle limits allow looking well above the horizon and down at the table. */}
         <OrbitControls
           enablePan={false}
           enableZoom={false}
-          minPolarAngle={Math.PI / 3}
-          maxPolarAngle={Math.PI / 2.1}
+          minPolarAngle={Math.PI * 0.12}
+          maxPolarAngle={Math.PI * 0.78}
           target={[cameraPosition[0], cameraPosition[1], cameraPosition[2] - 0.1]}
-          rotateSpeed={0.5}
+          rotateSpeed={0.7}
         />
 
         {/* Lighting */}
@@ -122,6 +122,7 @@ export function GameScene({ gameState, myName, diceResult, showExplosion, animat
         {/* My Avatar (visible body, head rotates with camera) */}
         <MyAvatar 
           position={myPosition}
+          colorIndex={myIndex}
           isCurrentTurn={myIndex === gameState.currentTurnIndex && gameState.phase === "playing"}
           hasBomb={myIndex === gameState.bombHolderIndex}
         />
@@ -142,6 +143,7 @@ export function GameScene({ gameState, myName, diceResult, showExplosion, animat
               position={[pos.x, 0, pos.z]}
               rotation={[0, pos.angle + Math.PI, 0]}
               name={player.name}
+              colorIndex={index}
               isCurrentTurn={isCurrentTurn && gameState.phase === "playing"}
               hasBomb={hasBomb}
               isConnected={player.socketId !== null}

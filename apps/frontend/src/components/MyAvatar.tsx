@@ -1,18 +1,19 @@
 "use client";
 
-import { useRef, useMemo, useEffect, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Capsule } from "@react-three/drei";
 import * as THREE from "three";
 import { getSocket } from "@/lib/socket";
+import { PlayerModel } from "./PlayerModel";
 
 interface MyAvatarProps {
   position: [number, number, number];
+  colorIndex: number;
   isCurrentTurn: boolean;
   hasBomb: boolean;
 }
 
-export function MyAvatar({ position, isCurrentTurn, hasBomb }: MyAvatarProps) {
+export function MyAvatar({ position, colorIndex, isCurrentTurn, hasBomb }: MyAvatarProps) {
   const headRef = useRef<THREE.Group>(null);
   const lastSentRotation = useRef({ x: 0, y: 0 });
   const frameCount = useRef(0);
@@ -25,38 +26,6 @@ export function MyAvatar({ position, isCurrentTurn, hasBomb }: MyAvatarProps) {
       setSkinTexture(savedSkin);
     }
   }, []);
-
-  const bodyColor = "#4a90d9";
-
-  const texture = useMemo(() => {
-    if (!skinTexture) return null;
-    const loader = new THREE.TextureLoader();
-    const tex = loader.load(skinTexture);
-    tex.minFilter = THREE.NearestFilter;
-    tex.magFilter = THREE.NearestFilter;
-    return tex;
-  }, [skinTexture]);
-
-  const headMaterials = useMemo(() => {
-    const sideMaterial = new THREE.MeshStandardMaterial({
-      color: "#e8c4a0",
-      roughness: 0.8,
-      metalness: 0.1,
-    });
-
-    if (texture) {
-      const frontMaterial = new THREE.MeshStandardMaterial({
-        map: texture,
-        roughness: 0.8,
-        metalness: 0.1,
-      });
-      return [
-        sideMaterial, sideMaterial, sideMaterial, sideMaterial,
-        frontMaterial, sideMaterial,
-      ];
-    }
-    return [sideMaterial, sideMaterial, sideMaterial, sideMaterial, sideMaterial, sideMaterial];
-  }, [texture]);
 
   useFrame(() => {
     if (headRef.current) {
@@ -99,56 +68,13 @@ export function MyAvatar({ position, isCurrentTurn, hasBomb }: MyAvatarProps) {
 
   return (
     <group position={position} scale={2}>
-      {/* Body */}
-      <Capsule
-        args={[0.25, 0.6, 8, 16]}
-        position={[0, 0.6, 0]}
-        castShadow
-      >
-        <meshStandardMaterial
-          color={bodyColor}
-          roughness={0.6}
-          metalness={0.2}
-        />
-      </Capsule>
-
-      {/* Head group - rotates with camera */}
-      <group ref={headRef} position={[0, 1.3, 0]}>
-        <mesh castShadow material={headMaterials}>
-          <boxGeometry args={[0.4, 0.4, 0.4]} />
-        </mesh>
-
-        {!skinTexture && (
-          <>
-            <mesh position={[0.08, 0.05, 0.21]}>
-              <sphereGeometry args={[0.04, 8, 8]} />
-              <meshBasicMaterial color="#000000" />
-            </mesh>
-            <mesh position={[-0.08, 0.05, 0.21]}>
-              <sphereGeometry args={[0.04, 8, 8]} />
-              <meshBasicMaterial color="#000000" />
-            </mesh>
-          </>
-        )}
-      </group>
-
-      {/* Arms */}
-      <Capsule
-        args={[0.08, 0.3, 4, 8]}
-        position={[0.35, 0.7, 0]}
-        rotation={[0, 0, -Math.PI / 4]}
-        castShadow
-      >
-        <meshStandardMaterial color={bodyColor} roughness={0.6} />
-      </Capsule>
-      <Capsule
-        args={[0.08, 0.3, 4, 8]}
-        position={[-0.35, 0.7, 0]}
-        rotation={[0, 0, Math.PI / 4]}
-        castShadow
-      >
-        <meshStandardMaterial color={bodyColor} roughness={0.6} />
-      </Capsule>
+      <PlayerModel
+        headRef={headRef}
+        colorIndex={colorIndex}
+        skinTexture={skinTexture}
+        hasBomb={hasBomb}
+        firstPerson
+      />
     </group>
   );
 }
