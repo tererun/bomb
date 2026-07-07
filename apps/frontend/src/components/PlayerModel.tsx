@@ -214,16 +214,20 @@ export function PlayerModel({
 
         {!firstPerson && (
           <>
-            {/* Hair: top, fringe and back (bowl cut, keeps square silhouette) */}
-            <mesh position={[0, 0.26, -0.01]} castShadow>
+            {/* Hair: top, fringe and back (bowl cut, keeps square silhouette).
+                With a custom skin the whole front face is the user's drawing,
+                so the top hair sits fully above it and the fringe is skipped. */}
+            <mesh position={[0, skinTexture ? 0.36 : 0.26, -0.01]} castShadow>
               <boxGeometry args={[0.46, 0.14, 0.46]} />
               <meshStandardMaterial color={hairColor} roughness={0.9} />
             </mesh>
-            <mesh position={[0, 0.235, 0.205]}>
-              <boxGeometry args={[0.46, 0.06, 0.06]} />
-              <meshStandardMaterial color={hairColor} roughness={0.9} />
-            </mesh>
-            <mesh position={[0, 0.1, -0.19]}>
+            {!skinTexture && (
+              <mesh position={[0, 0.235, 0.205]}>
+                <boxGeometry args={[0.46, 0.06, 0.06]} />
+                <meshStandardMaterial color={hairColor} roughness={0.9} />
+              </mesh>
+            )}
+            <mesh position={[0, skinTexture ? 0.15 : 0.1, -0.19]}>
               <boxGeometry args={[0.46, 0.28, 0.09]} />
               <meshStandardMaterial color={hairColor} roughness={0.9} />
             </mesh>
