@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getSocket, connectSocket } from "@/lib/socket";
-import { SkinCanvas } from "@/components/SkinCanvas";
+import { CharacterCreator } from "@/components/CharacterCreator";
+import { type CharacterConfig } from "@/lib/character";
+import { loadCharacter } from "@/lib/characterStore";
 
 export default function Home() {
   const router = useRouter();
@@ -11,7 +13,7 @@ export default function Home() {
   const [roomId, setRoomId] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [skin, setSkin] = useState<string | null>(null);
+  const [character, setCharacter] = useState<CharacterConfig | null>(null);
 
   useEffect(() => {
     connectSocket();
@@ -19,16 +21,8 @@ export default function Home() {
     if (savedName) {
       setPlayerName(savedName);
     }
-    const savedSkin = localStorage.getItem("bombGame_skin");
-    if (savedSkin) {
-      setSkin(savedSkin);
-    }
+    loadCharacter().then(setCharacter);
   }, []);
-
-  const handleSaveSkin = (dataUrl: string) => {
-    setSkin(dataUrl);
-    localStorage.setItem("bombGame_skin", dataUrl);
-  };
 
   const handleCreateRoom = () => {
     if (!playerName.trim()) {
@@ -40,7 +34,7 @@ export default function Home() {
     setError("");
     const socket = getSocket();
 
-    socket.emit("createRoom", playerName.trim(), skin, (response) => {
+    socket.emit("createRoom", playerName.trim(), character, (response) => {
       setIsLoading(false);
       if (response.success && response.roomId) {
         localStorage.setItem("bombGame_playerName", playerName.trim());
@@ -66,7 +60,7 @@ export default function Home() {
     setError("");
     const socket = getSocket();
 
-    socket.emit("joinRoom", roomId.trim().toUpperCase(), playerName.trim(), skin, (response) => {
+    socket.emit("joinRoom", roomId.trim().toUpperCase(), playerName.trim(), character, (response) => {
       setIsLoading(false);
       if (response.success) {
         localStorage.setItem("bombGame_playerName", playerName.trim());
@@ -80,7 +74,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex items-center justify-center p-4">
-      <div className="flex gap-6 items-start">
+      <div className="flex gap-6 items-start flex-wrap justify-center">
         <div className="bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <h1 className="text-4xl font-bold text-center mb-2 text-white">
           💣 爆弾回しゲーム
@@ -162,7 +156,9 @@ export default function Home() {
           </div>
         </div>
 
-        <SkinCanvas onSave={handleSaveSkin} initialSkin={skin} />
+        {character && (
+          <CharacterCreator value={character} onChange={setCharacter} />
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import type { Player, Bomb, GameState, ColorThresholds, DiceResult } from "./types";
+import type { Player, Bomb, GameState, ColorThresholds, DiceResult, CharacterConfig } from "./types";
 
 export class GameRoom {
   roomId: string;
@@ -29,13 +29,13 @@ export class GameRoom {
     this.colorThresholds = { yellow, red };
   }
 
-  addPlayer(name: string, socketId: string, skin?: string | null): Player | null {
+  addPlayer(name: string, socketId: string, character?: CharacterConfig | null): Player | null {
     if (this.players.has(name)) {
       // Reconnection
       const player = this.players.get(name)!;
       player.socketId = socketId;
-      if (skin !== undefined) {
-        player.skin = skin;
+      if (character !== undefined) {
+        player.character = character;
       }
       return player;
     }
@@ -52,17 +52,17 @@ export class GameRoom {
       isAlive: true,
       isHost,
       headRotation: { x: 0, y: 0 },
-      skin: skin || null,
+      character: character || null,
     };
 
     this.players.set(name, player);
     return player;
   }
 
-  updatePlayerSkin(socketId: string, skin: string | null): Player | undefined {
+  updatePlayerCharacter(socketId: string, character: CharacterConfig | null): Player | undefined {
     const player = this.getPlayerBySocketId(socketId);
     if (player) {
-      player.skin = skin;
+      player.character = character;
     }
     return player;
   }

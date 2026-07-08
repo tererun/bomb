@@ -27,14 +27,14 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>({
 io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
-  socket.on("createRoom", (playerName, skin, callback) => {
+  socket.on("createRoom", (playerName, character, callback) => {
     let roomId = generateRoomId();
     while (rooms.has(roomId)) {
       roomId = generateRoomId();
     }
 
     const room = new GameRoom(roomId, playerName);
-    const player = room.addPlayer(playerName, socket.id, skin);
+    const player = room.addPlayer(playerName, socket.id, character);
 
     if (!player) {
       if (typeof callback === "function") {
@@ -54,7 +54,7 @@ io.on("connection", (socket) => {
     console.log(`Room ${roomId} created by ${playerName}`);
   });
 
-  socket.on("joinRoom", (roomId, playerName, skin, callback) => {
+  socket.on("joinRoom", (roomId, playerName, character, callback) => {
     const room = rooms.get(roomId.toUpperCase());
     
     if (!room) {
@@ -69,8 +69,8 @@ io.on("connection", (socket) => {
     // Allow reconnection: if the same player reconnects, update their socket
     if (existingPlayer) {
       existingPlayer.socketId = socket.id;
-      if (skin !== undefined) {
-        existingPlayer.skin = skin;
+      if (character !== undefined) {
+        existingPlayer.character = character;
       }
       socket.join(roomId.toUpperCase());
       if (typeof callback === "function") {
@@ -82,7 +82,7 @@ io.on("connection", (socket) => {
       return;
     }
 
-    const player = room.addPlayer(playerName, socket.id, skin);
+    const player = room.addPlayer(playerName, socket.id, character);
     
     if (!player) {
       if (typeof callback === "function") {
@@ -282,17 +282,17 @@ io.on("connection", (socket) => {
     });
   });
 
-  socket.on("updateSkin", (skin) => {
+  socket.on("updateCharacter", (character) => {
     const room = findRoomBySocketId(socket.id);
     if (!room) return;
 
-    const player = room.updatePlayerSkin(socket.id, skin);
+    const player = room.updatePlayerCharacter(socket.id, character);
     if (!player) return;
 
     // Broadcast to other players in the room
-    socket.to(room.roomId).emit("playerSkinUpdated", {
+    socket.to(room.roomId).emit("playerCharacterUpdated", {
       playerName: player.name,
-      skin,
+      character,
     });
   });
 

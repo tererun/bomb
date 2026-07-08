@@ -1,4 +1,5 @@
 import { io, Socket } from "socket.io-client";
+import type { CharacterConfig } from "./character";
 
 export interface Player {
   name: string;
@@ -7,7 +8,7 @@ export interface Player {
   isAlive: boolean;
   isHost: boolean;
   headRotation: { x: number; y: number };
-  skin?: string | null;
+  character?: CharacterConfig | null;
 }
 
 export interface Bomb {
@@ -42,13 +43,13 @@ export interface DiceResult {
 }
 
 interface ClientToServerEvents {
-  createRoom: (playerName: string, skin: string | null, callback: (response: { success: boolean; roomId?: string; error?: string }) => void) => void;
-  joinRoom: (roomId: string, playerName: string, skin: string | null, callback: (response: { success: boolean; error?: string }) => void) => void;
+  createRoom: (playerName: string, character: CharacterConfig | null, callback: (response: { success: boolean; roomId?: string; error?: string }) => void) => void;
+  joinRoom: (roomId: string, playerName: string, character: CharacterConfig | null, callback: (response: { success: boolean; error?: string }) => void) => void;
   startGame: (callback: (response: { success: boolean; error?: string }) => void) => void;
   rollDice: (callback: (response: { success: boolean; error?: string }) => void) => void;
   passBomb: (targetName: string, callback: (response: { success: boolean; error?: string }) => void) => void;
   updateHeadRotation: (rotation: { x: number; y: number }) => void;
-  updateSkin: (skin: string | null) => void;
+  updateCharacter: (character: CharacterConfig | null) => void;
 }
 
 interface ServerToClientEvents {
@@ -64,7 +65,7 @@ interface ServerToClientEvents {
   directionChanged: (direction: 1 | -1) => void;
   waitingForPassChoice: (playerName: string) => void;
   playerHeadRotation: (data: { playerName: string; rotation: { x: number; y: number } }) => void;
-  playerSkinUpdated: (data: { playerName: string; skin: string | null }) => void;
+  playerCharacterUpdated: (data: { playerName: string; character: CharacterConfig | null }) => void;
   error: (message: string) => void;
 }
 

@@ -9,6 +9,7 @@ import { PlayerSelect } from "@/components/UI/PlayerSelect";
 import { VolumeSlider } from "@/components/UI/VolumeSlider";
 import { DiceCup } from "@/components/DiceCup";
 import * as sounds from "@/lib/sounds";
+import { loadCharacter } from "@/lib/characterStore";
 
 const GameScene = dynamic(() => import("@/components/GameScene").then(mod => mod.GameScene), {
   ssr: false,
@@ -63,9 +64,9 @@ export default function GamePage({ params }: PageProps) {
 
     // Check if already connected to this room (e.g., after creating)
     // If not, join the room
-    const savedSkin = localStorage.getItem("bombGame_skin");
-    const handleJoin = () => {
-      socket.emit("joinRoom", roomId, savedName, savedSkin, (response) => {
+    const handleJoin = async () => {
+      const character = await loadCharacter();
+      socket.emit("joinRoom", roomId, savedName, character, (response) => {
         if (!response.success) {
           alert(response.error || "Failed to join room");
           router.push("/");
@@ -261,14 +262,14 @@ export default function GamePage({ params }: PageProps) {
       });
     });
 
-    socket.on("playerSkinUpdated", (data) => {
+    socket.on("playerCharacterUpdated", (data) => {
       setGameState((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
           players: prev.players.map((p) =>
             p.name === data.playerName
-              ? { ...p, skin: data.skin }
+              ? { ...p, character: data.character }
               : p
           ),
         };
@@ -288,7 +289,7 @@ export default function GamePage({ params }: PageProps) {
       socket.off("bombMoved");
       socket.off("directionChanged");
       socket.off("playerHeadRotation");
-      socket.off("playerSkinUpdated");
+      socket.off("playerCharacterUpdated");
     };
   }, [roomId, router, showNotification]);
 
