@@ -65,7 +65,9 @@ function Eyes({
   pupilColor: string;
   hairColor: string;
 }) {
-  const y = 0.12 + config.offsetY * 0.09;
+  // Keep the top end of the range below the hair fringe so raised eyes
+  // don't disappear behind it.
+  const y = 0.12 + config.offsetY * (config.offsetY > 0 ? 0.06 : 0.09);
   const half = 0.05 + config.spacing * 0.11;
 
   return (
