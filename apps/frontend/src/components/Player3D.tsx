@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import * as THREE from "three";
 import { PlayerModel } from "./PlayerModel";
+import type { CharacterConfig } from "@/lib/character";
 
 interface Player3DProps {
   position: [number, number, number];
@@ -16,7 +17,7 @@ interface Player3DProps {
   isConnected: boolean;
   headRotation: { x: number; y: number };
   hideStatus?: boolean;
-  skinTexture?: string | null;
+  character?: CharacterConfig | null;
 }
 
 export function Player3D({
@@ -29,7 +30,7 @@ export function Player3D({
   isConnected,
   headRotation,
   hideStatus = false,
-  skinTexture,
+  character,
 }: Player3DProps) {
   const groupRef = useRef<THREE.Group>(null);
   const headRef = useRef<THREE.Group>(null);
@@ -56,7 +57,7 @@ export function Player3D({
       <PlayerModel
         headRef={headRef}
         colorIndex={colorIndex}
-        skinTexture={skinTexture}
+        character={character}
         isConnected={isConnected}
         hasBomb={hasBomb}
       />

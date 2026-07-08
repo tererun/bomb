@@ -1,3 +1,12 @@
+// Character customization payload. The server stores and relays it as-is;
+// rendering/validation happens on the clients.
+export interface CharacterConfig {
+  eyes: { enabled: boolean; type: number; offsetY: number; spacing: number };
+  hair: { enabled: boolean; type: number; flip: boolean };
+  mouth: { enabled: boolean; type: number; offsetX: number; offsetY: number };
+  facePaint: string | null;
+}
+
 export interface Player {
   name: string;
   socketId: string | null;
@@ -5,7 +14,7 @@ export interface Player {
   isAlive: boolean;
   isHost: boolean;
   headRotation: { x: number; y: number };
-  skin?: string | null;
+  character?: CharacterConfig | null;
 }
 
 export interface Bomb {
@@ -40,13 +49,13 @@ export interface DiceResult {
 }
 
 export interface ClientToServerEvents {
-  createRoom: (playerName: string, skin: string | null, callback: (response: { success: boolean; roomId?: string; error?: string }) => void) => void;
-  joinRoom: (roomId: string, playerName: string, skin: string | null, callback: (response: { success: boolean; error?: string }) => void) => void;
+  createRoom: (playerName: string, character: CharacterConfig | null, callback: (response: { success: boolean; roomId?: string; error?: string }) => void) => void;
+  joinRoom: (roomId: string, playerName: string, character: CharacterConfig | null, callback: (response: { success: boolean; error?: string }) => void) => void;
   startGame: (callback: (response: { success: boolean; error?: string }) => void) => void;
   rollDice: (callback: (response: { success: boolean; error?: string }) => void) => void;
   passBomb: (targetName: string, callback: (response: { success: boolean; error?: string }) => void) => void;
   updateHeadRotation: (rotation: { x: number; y: number }) => void;
-  updateSkin: (skin: string | null) => void;
+  updateCharacter: (character: CharacterConfig | null) => void;
 }
 
 export interface ServerToClientEvents {
@@ -62,6 +71,6 @@ export interface ServerToClientEvents {
   directionChanged: (direction: 1 | -1) => void;
   waitingForPassChoice: (playerName: string) => void;
   playerHeadRotation: (data: { playerName: string; rotation: { x: number; y: number } }) => void;
-  playerSkinUpdated: (data: { playerName: string; skin: string | null }) => void;
+  playerCharacterUpdated: (data: { playerName: string; character: CharacterConfig | null }) => void;
   error: (message: string) => void;
 }

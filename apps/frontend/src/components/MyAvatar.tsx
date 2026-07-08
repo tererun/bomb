@@ -1,31 +1,25 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { getSocket } from "@/lib/socket";
 import { PlayerModel } from "./PlayerModel";
+import type { CharacterConfig } from "@/lib/character";
 
 interface MyAvatarProps {
   position: [number, number, number];
   colorIndex: number;
   isCurrentTurn: boolean;
   hasBomb: boolean;
+  character?: CharacterConfig | null;
 }
 
-export function MyAvatar({ position, colorIndex, isCurrentTurn, hasBomb }: MyAvatarProps) {
+export function MyAvatar({ position, colorIndex, isCurrentTurn, hasBomb, character }: MyAvatarProps) {
   const headRef = useRef<THREE.Group>(null);
   const lastSentRotation = useRef({ x: 0, y: 0 });
   const frameCount = useRef(0);
   const { camera } = useThree();
-  const [skinTexture, setSkinTexture] = useState<string | null>(null);
-
-  useEffect(() => {
-    const savedSkin = localStorage.getItem("bombGame_skin");
-    if (savedSkin) {
-      setSkinTexture(savedSkin);
-    }
-  }, []);
 
   useFrame(() => {
     if (headRef.current) {
@@ -71,7 +65,7 @@ export function MyAvatar({ position, colorIndex, isCurrentTurn, hasBomb }: MyAva
       <PlayerModel
         headRef={headRef}
         colorIndex={colorIndex}
-        skinTexture={skinTexture}
+        character={character}
         hasBomb={hasBomb}
         firstPerson
       />
