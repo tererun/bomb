@@ -1,4 +1,5 @@
-import type { Player, Bomb, GameState, ColorThresholds, DiceResult, CharacterConfig } from "./types";
+import type { Player, Bomb, GameState, ColorThresholds, DiceResult, CharacterConfig, StageEnvironment } from "./types";
+import { STAGE_COUNT } from "./types";
 
 export class GameRoom {
   roomId: string;
@@ -13,6 +14,7 @@ export class GameRoom {
   winner?: string;
   loser?: string;
   waitingForPassChoice: boolean = false;
+  environment: StageEnvironment;
 
   constructor(roomId: string, hostName: string) {
     this.roomId = roomId;
@@ -27,6 +29,21 @@ export class GameRoom {
     const yellow = Math.floor(Math.random() * 31) + 20;
     const red = Math.floor(Math.random() * 31) + 60;
     this.colorThresholds = { yellow, red };
+
+    this.environment = GameRoom.rollEnvironment();
+  }
+
+  static rollEnvironment(excludeStageId?: number): StageEnvironment {
+    let stageId = Math.floor(Math.random() * STAGE_COUNT);
+    if (excludeStageId !== undefined && STAGE_COUNT > 1) {
+      while (stageId === excludeStageId) {
+        stageId = Math.floor(Math.random() * STAGE_COUNT);
+      }
+    }
+    return {
+      stageId,
+      seed: Math.floor(Math.random() * 2 ** 31),
+    };
   }
 
   addPlayer(name: string, socketId: string, character?: CharacterConfig | null): Player | null {
@@ -111,6 +128,9 @@ export class GameRoom {
     this.phase = "playing";
     this.currentTurnIndex = 0;
     this.bombHolderIndex = 0;
+    // Re-roll the stage so each match starts on a fresh random field,
+    // different from the one shown in the lobby.
+    this.environment = GameRoom.rollEnvironment(this.environment.stageId);
     return true;
   }
 
@@ -251,6 +271,7 @@ export class GameRoom {
       phase: this.phase,
       colorThresholds: { ...this.colorThresholds },
       bombHolderIndex: this.bombHolderIndex,
+      environment: { ...this.environment },
       winner: this.winner,
       loser: this.loser,
     };

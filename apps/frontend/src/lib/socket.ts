@@ -22,6 +22,11 @@ export interface ColorThresholds {
   red: number;
 }
 
+export interface StageEnvironment {
+  stageId: number;
+  seed: number;
+}
+
 export interface GameState {
   roomId: string;
   players: Player[];
@@ -31,6 +36,7 @@ export interface GameState {
   phase: "waiting" | "playing" | "finished";
   colorThresholds: ColorThresholds;
   bombHolderIndex: number;
+  environment?: StageEnvironment;
   winner?: string;
   loser?: string;
 }
