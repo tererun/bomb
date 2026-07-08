@@ -69,11 +69,18 @@ function Eyes({
   // don't disappear behind it.
   const y = 0.12 + config.offsetY * (config.offsetY > 0 ? 0.06 : 0.09);
   const half = 0.05 + config.spacing * 0.11;
+  // Tilt is mirrored per eye: positive = つり目 (outer corners up)
+  const tilt = THREE.MathUtils.degToRad(config.rotation);
 
   return (
     <group ref={eyesRef} position={[0, y, 0]}>
       {[-1, 1].map((side) => (
-        <group key={`eye-${side}`} position={[half * side, 0, 0]}>
+        <group
+          key={`eye-${side}`}
+          position={[half * side, 0, 0]}
+          rotation={[0, 0, tilt * side]}
+          scale={[config.scale, config.scale, 1]}
+        >
           {config.type === 0 && (
             <>
               {/* Round: white eyeball + pupil */}
@@ -146,7 +153,11 @@ function Mouth({ config }: { config: CharacterConfig["mouth"] }) {
   const y = -0.02 + config.offsetY * 0.07;
 
   return (
-    <group position={[x, y, 0]}>
+    <group
+      position={[x, y, 0]}
+      rotation={[0, 0, THREE.MathUtils.degToRad(config.rotation)]}
+      scale={[config.scale, config.scale, 1]}
+    >
       {config.type === 0 && (
         /* Smile (lower half arc) */
         <mesh position={[0, 0.02, FACE_Z + 0.005]} rotation={[0, 0, Math.PI]}>
@@ -340,7 +351,9 @@ export function PlayerModel({
 
   const char = useMemo(() => normalizeCharacter(character), [character]);
 
-  const bodyColor = isConnected ? getPlayerColor(colorIndex) : DISCONNECTED_BODY;
+  const bodyColor = isConnected
+    ? char.body.color ?? getPlayerColor(colorIndex)
+    : DISCONNECTED_BODY;
   const skinColor = isConnected ? SKIN_COLOR : DISCONNECTED_SKIN;
   const hairColor = isConnected
     ? HAIR_COLORS[((colorIndex % HAIR_COLORS.length) + HAIR_COLORS.length) % HAIR_COLORS.length]

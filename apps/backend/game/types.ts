@@ -1,9 +1,10 @@
 // Character customization payload. The server stores and relays it as-is;
 // rendering/validation happens on the clients.
 export interface CharacterConfig {
-  eyes: { enabled: boolean; type: number; offsetY: number; spacing: number };
+  eyes: { enabled: boolean; type: number; offsetY: number; spacing: number; scale: number; rotation: number };
   hair: { enabled: boolean; type: number; flip: boolean };
-  mouth: { enabled: boolean; type: number; offsetX: number; offsetY: number };
+  mouth: { enabled: boolean; type: number; offsetX: number; offsetY: number; scale: number; rotation: number };
+  body: { color: string | null };
   facePaint: string | null;
 }
 

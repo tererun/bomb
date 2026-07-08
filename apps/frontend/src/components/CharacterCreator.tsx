@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   type CharacterConfig,
+  BODY_COLOR_PRESETS,
   EYE_TYPES,
   HAIR_TYPES,
   MOUTH_TYPES,
@@ -20,12 +21,13 @@ const FACE_BASE_COLOR = "#e8c4a0";
 /** Slider drags等の連続変更をこの時間内なら1つのUndoステップにまとめる */
 const GESTURE_MERGE_MS = 800;
 
-type SectionId = "hair" | "eyes" | "mouth" | "facePaint";
+type SectionId = "hair" | "eyes" | "mouth" | "body" | "facePaint";
 
 const SECTIONS: { id: SectionId; label: string; icon: string }[] = [
   { id: "hair", label: "髪型", icon: "💇" },
   { id: "eyes", label: "目", icon: "👀" },
   { id: "mouth", label: "口", icon: "👄" },
+  { id: "body", label: "服", icon: "👕" },
   { id: "facePaint", label: "顔ペイント", icon: "🎨" },
 ];
 
@@ -204,6 +206,7 @@ function Slider({
   value,
   min,
   max,
+  step = 0.01,
   onChange,
   onCommit,
   disabled,
@@ -212,6 +215,7 @@ function Slider({
   value: number;
   min: number;
   max: number;
+  step?: number;
   onChange: (v: number) => void;
   /** ドラッグ終了時に呼ばれ、Undoのまとまり(ジェスチャ)を区切る */
   onCommit?: () => void;
@@ -224,7 +228,7 @@ function Slider({
         type="range"
         min={min}
         max={max}
-        step={0.01}
+        step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
         onPointerUp={onCommit}
@@ -253,6 +257,54 @@ function Panel({
         {onToggle && <Toggle checked={enabled ?? false} onChange={onToggle} />}
       </div>
       {children}
+    </div>
+  );
+}
+
+function BodyColorPicker({
+  value,
+  onChange,
+}: {
+  value: string | null;
+  /** gestureKeyはカラーピッカーの連続変更を1つのUndoステップにまとめるために使う */
+  onChange: (color: string | null, gestureKey?: string) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        {BODY_COLOR_PRESETS.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => onChange(c)}
+            aria-label={`服の色 ${c}`}
+            className={`w-9 h-9 rounded-full border-2 transition-transform hover:scale-110 ${
+              value === c ? "border-orange-400 scale-110" : "border-gray-600"
+            }`}
+            style={{ backgroundColor: c }}
+          />
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-gray-300 text-xs">カスタム</span>
+        <input
+          type="color"
+          value={value ?? "#4a90d9"}
+          onChange={(e) => onChange(e.target.value, "body.color")}
+          className="w-9 h-9 rounded cursor-pointer border-0 bg-transparent"
+        />
+      </div>
+      <button
+        type="button"
+        onClick={() => onChange(null)}
+        disabled={value === null}
+        className="w-full py-1.5 bg-gray-600 hover:bg-gray-500 text-white rounded-lg text-xs transition-colors disabled:opacity-40 disabled:pointer-events-none"
+      >
+        おまかせに戻す
+      </button>
+      <p className="text-gray-400 text-[11px]">
+        おまかせの場合、入室順にプレイヤーごとの色が自動で割り当てられます。
+      </p>
     </div>
   );
 }
@@ -601,6 +653,29 @@ export function CharacterCreatorModal({
                   }
                   onCommit={endGesture}
                 />
+                <Slider
+                  label="大きさ"
+                  value={value.eyes.scale}
+                  min={0.5}
+                  max={1.5}
+                  disabled={!value.eyes.enabled}
+                  onChange={(scale) =>
+                    update({ eyes: { ...value.eyes, scale } }, "eyes.scale")
+                  }
+                  onCommit={endGesture}
+                />
+                <Slider
+                  label="傾き (たれ目 ← → つり目)"
+                  value={value.eyes.rotation}
+                  min={-30}
+                  max={30}
+                  step={1}
+                  disabled={!value.eyes.enabled}
+                  onChange={(rotation) =>
+                    update({ eyes: { ...value.eyes, rotation } }, "eyes.rotation")
+                  }
+                  onCommit={endGesture}
+                />
               </Panel>
             )}
 
@@ -637,6 +712,40 @@ export function CharacterCreatorModal({
                     update({ mouth: { ...value.mouth, offsetX } }, "mouth.offsetX")
                   }
                   onCommit={endGesture}
+                />
+                <Slider
+                  label="大きさ"
+                  value={value.mouth.scale}
+                  min={0.5}
+                  max={1.5}
+                  disabled={!value.mouth.enabled}
+                  onChange={(scale) =>
+                    update({ mouth: { ...value.mouth, scale } }, "mouth.scale")
+                  }
+                  onCommit={endGesture}
+                />
+                <Slider
+                  label="回転"
+                  value={value.mouth.rotation}
+                  min={-45}
+                  max={45}
+                  step={1}
+                  disabled={!value.mouth.enabled}
+                  onChange={(rotation) =>
+                    update({ mouth: { ...value.mouth, rotation } }, "mouth.rotation")
+                  }
+                  onCommit={endGesture}
+                />
+              </Panel>
+            )}
+
+            {section === "body" && (
+              <Panel title="服">
+                <BodyColorPicker
+                  value={value.body.color}
+                  onChange={(color, gestureKey) =>
+                    update({ body: { color } }, gestureKey)
+                  }
                 />
               </Panel>
             )}
