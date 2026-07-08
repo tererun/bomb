@@ -9,6 +9,8 @@ import { Bomb3D } from "./Bomb3D";
 import { Player3D } from "./Player3D";
 import { Dice3D } from "./Dice3D";
 import { MyAvatar } from "./MyAvatar";
+import { Environment3D } from "./Environment3D";
+import { getStage } from "@/lib/environments";
 
 interface GameSceneProps {
   gameState: GameState;
@@ -71,6 +73,8 @@ export function GameScene({ gameState, myName, diceResult, showExplosion, animat
     };
   }, [gameState.bombHolderIndex, playerPositions, animatingBombIndex]);
 
+  const stage = getStage(gameState.environment?.stageId);
+
   const damagePercent = (gameState.bomb.damage / gameState.bomb.maxHp) * 100;
   const bombColor = damagePercent >= gameState.colorThresholds.red
     ? "red"
@@ -81,6 +85,11 @@ export function GameScene({ gameState, myName, diceResult, showExplosion, animat
   return (
     <Canvas shadows onCreated={({ gl }) => { gl.setClearColor('#1a1a2e'); }}>
       <Suspense fallback={null}>
+        {/* Skybox, ground, lighting and stage decorations (changes every match) */}
+        <Environment3D
+          stageId={gameState.environment?.stageId}
+          seed={gameState.environment?.seed}
+        />
         <PerspectiveCamera
           makeDefault
           position={cameraPosition}
@@ -99,25 +108,8 @@ export function GameScene({ gameState, myName, diceResult, showExplosion, animat
           rotateSpeed={0.7}
         />
 
-        {/* Lighting */}
-        <ambientLight intensity={0.5} />
-        <directionalLight
-          position={[5, 10, 5]}
-          intensity={1}
-          castShadow
-          shadow-mapSize={[1024, 1024]}
-        />
-        <pointLight position={[0, 5, 0]} intensity={0.5} />
-        <hemisphereLight args={['#87ceeb', '#362312', 0.3]} />
-
-        {/* Floor */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
-          <planeGeometry args={[30, 30]} />
-          <meshStandardMaterial color="#1a1a2e" />
-        </mesh>
-
         {/* Table */}
-        <Table />
+        <Table theme={stage.table} />
 
         {/* My Avatar (visible body, head rotates with camera) */}
         <MyAvatar 

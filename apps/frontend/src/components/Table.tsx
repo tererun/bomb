@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef } from "react";
 import { Cylinder } from "@react-three/drei";
-import * as THREE from "three";
+import { DEFAULT_STAGE, type StageDefinition } from "@/lib/environments";
 
-export function Table() {
-  const tableRef = useRef<THREE.Mesh>(null);
+interface TableProps {
+  theme?: StageDefinition["table"];
+}
 
+export function Table({ theme = DEFAULT_STAGE.table }: TableProps) {
   return (
     <group position={[0, 0, 0]}>
       {/* Table top */}
@@ -17,7 +18,7 @@ export function Table() {
         receiveShadow
       >
         <meshStandardMaterial
-          color="#4a3728"
+          color={theme.top}
           roughness={0.8}
           metalness={0.1}
         />
@@ -29,7 +30,7 @@ export function Table() {
         position={[0, 0.75, 0]}
       >
         <meshStandardMaterial
-          color="#2d2016"
+          color={theme.rim}
           roughness={0.6}
           metalness={0.2}
         />
@@ -41,7 +42,7 @@ export function Table() {
         position={[0, 0.73, 0]}
       >
         <meshStandardMaterial
-          color="#5c4a3a"
+          color={theme.center}
           roughness={0.5}
           metalness={0.3}
         />
@@ -54,7 +55,7 @@ export function Table() {
         castShadow
       >
         <meshStandardMaterial
-          color="#2d2016"
+          color={theme.leg}
           roughness={0.7}
           metalness={0.1}
         />
@@ -67,7 +68,7 @@ export function Table() {
         castShadow
       >
         <meshStandardMaterial
-          color="#2d2016"
+          color={theme.leg}
           roughness={0.7}
           metalness={0.1}
         />

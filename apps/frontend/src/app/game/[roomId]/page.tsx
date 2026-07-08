@@ -10,6 +10,7 @@ import { VolumeSlider } from "@/components/UI/VolumeSlider";
 import { DiceCup } from "@/components/DiceCup";
 import * as sounds from "@/lib/sounds";
 import { loadCharacter } from "@/lib/characterStore";
+import { getStage } from "@/lib/environments";
 
 const GameScene = dynamic(() => import("@/components/GameScene").then(mod => mod.GameScene), {
   ssr: false,
@@ -49,6 +50,17 @@ export default function GamePage({ params }: PageProps) {
     setNotification(message);
     setTimeout(() => setNotification(""), duration);
   }, []);
+
+  // Announce the stage when a match starts (the server re-rolls it per game).
+  const announcedStageRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (gameState?.phase !== "playing") return;
+    const stageId = gameState.environment?.stageId;
+    if (stageId === undefined || announcedStageRef.current === stageId) return;
+    announcedStageRef.current = stageId;
+    const stage = getStage(stageId);
+    showNotification(`${stage.emoji} ステージ: ${stage.name}`, 2500);
+  }, [gameState?.phase, gameState?.environment?.stageId, showNotification]);
 
   useEffect(() => {
     const savedName = localStorage.getItem("bombGame_playerName");

@@ -28,6 +28,16 @@ export interface ColorThresholds {
   red: number; // damage percentage to turn red
 }
 
+// Number of visual stages defined on the frontend (lib/environments.ts).
+export const STAGE_COUNT = 6;
+
+// Visual environment for a match. Randomized per room so every match
+// gets a different skybox/field, shared by all players in the room.
+export interface StageEnvironment {
+  stageId: number;
+  seed: number;
+}
+
 export interface GameState {
   roomId: string;
   players: Player[];
@@ -37,6 +47,7 @@ export interface GameState {
   phase: "waiting" | "playing" | "finished";
   colorThresholds: ColorThresholds;
   bombHolderIndex: number;
+  environment: StageEnvironment;
   winner?: string;
   loser?: string;
 }
