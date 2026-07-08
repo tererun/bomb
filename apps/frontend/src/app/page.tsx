@@ -2,10 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { getSocket, connectSocket } from "@/lib/socket";
-import { CharacterCreator } from "@/components/CharacterCreator";
+import { CharacterCreatorModal } from "@/components/CharacterCreator";
 import { type CharacterConfig } from "@/lib/character";
 import { loadCharacter } from "@/lib/characterStore";
+
+const CharacterPreview = dynamic(
+  () =>
+    import("@/components/CharacterPreview").then((m) => m.CharacterPreview),
+  { ssr: false }
+);
 
 export default function Home() {
   const router = useRouter();
@@ -14,6 +21,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [character, setCharacter] = useState<CharacterConfig | null>(null);
+  const [isCreatorOpen, setIsCreatorOpen] = useState(false);
 
   useEffect(() => {
     connectSocket();
@@ -74,7 +82,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex items-center justify-center p-4">
-      <div className="flex gap-6 items-start flex-wrap justify-center">
+      <div className="flex flex-col lg:flex-row gap-6 items-center lg:items-start justify-center">
         <div className="bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <h1 className="text-4xl font-bold text-center mb-2 text-white">
           💣 爆弾回しゲーム
@@ -157,9 +165,34 @@ export default function Home() {
         </div>
 
         {character && (
-          <CharacterCreator value={character} onChange={setCharacter} />
+          <div className="bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-md sm:w-[280px]">
+            <h2 className="text-lg font-bold text-white text-center mb-3">
+              あなたのキャラ
+            </h2>
+            <div className="h-[300px] bg-gray-900 rounded-xl overflow-hidden">
+              <CharacterPreview character={character} />
+            </div>
+            <p className="text-gray-500 text-[11px] text-center mt-1">
+              ドラッグで回転できます
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsCreatorOpen(true)}
+              className="mt-3 w-full py-3 bg-gradient-to-r from-pink-500 to-orange-500 text-white font-bold rounded-lg hover:from-pink-600 hover:to-orange-600 transition-all"
+            >
+              🎨 キャラクリする
+            </button>
+          </div>
         )}
       </div>
+
+      {character && isCreatorOpen && (
+        <CharacterCreatorModal
+          value={character}
+          onChange={setCharacter}
+          onClose={() => setIsCreatorOpen(false)}
+        />
+      )}
     </div>
   );
 }
